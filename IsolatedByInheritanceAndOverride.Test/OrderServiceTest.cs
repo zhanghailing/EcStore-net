@@ -1,6 +1,7 @@
 ﻿using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IsolatedByInheritanceAndOverride.Test
 {
@@ -18,6 +19,8 @@ namespace IsolatedByInheritanceAndOverride.Test
         }
 
         private TestContext testContextInstance;
+        private OrderServiceForTest _orderServiceForTest = new OrderServiceForTest();
+        private IBookDao _mockBookDao = Substitute.For<IBookDao>();
 
         /// <summary>
         ///取得或設定提供目前測試回合
@@ -53,24 +56,35 @@ namespace IsolatedByInheritanceAndOverride.Test
 
         #endregion 其他測試屬性
 
+        [SetUp]
+        public void Setup()
+        {
+            _orderServiceForTest.SetBookDao(_mockBookDao);
+        }
+
         [Test]
         public void Test_SyncBookOrders_3_Orders_Only_2_book_order()
         {
-            var target = new OrderServiceForTest();
-            target.SetOrders(new List<Order>
-            {
-                new Order {Type = "Book"},
-                new Order {Type = "CD"},
-                new Order {Type = "Book"},
-            });
+            GivenOrders(
+                new Order { Type = "Book" },
+                new Order { Type = "CD" },
+                new Order { Type = "Book" }
+            );
 
-            var mockBookDao = Substitute.For<IBookDao>();
-            target.SetBookDao(mockBookDao);
+            _orderServiceForTest.SyncBookOrders();
 
-            target.SyncBookOrders();
+            BookDaoShouldInsertTimes(2);
+        }
 
-            mockBookDao.Received(2)
+        public void BookDaoShouldInsertTimes(int times)
+        {
+            _mockBookDao.Received(times)
                 .Insert(Arg.Is<Order>(o => o.Type == "Book"));
+        }
+
+        private void GivenOrders(params Order[] orders)
+        {
+            _orderServiceForTest.SetOrders(orders.ToList());
         }
     }
 
