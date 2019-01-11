@@ -1,4 +1,5 @@
-﻿using NSubstitute;
+﻿using Moq;
+using Moq.Protected;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -10,15 +11,17 @@ namespace IsolatedByInheritanceAndOverride.Test
     [TestFixture]
     public class OrderServiceTest
     {
-        private FakeOrderService _orderService;
-        private IBookDao _bookDao;
+        private Mock<OrderService> _orderService;
+        private Mock<IBookDao> _bookDao;
 
         [SetUp]
         public void Setup()
         {
-            _orderService = new FakeOrderService();
-            _bookDao = Substitute.For<IBookDao>();
-            _orderService.SetBookDao(_bookDao);
+            _orderService = new Mock<OrderService>();
+            _bookDao = new Mock<IBookDao>();
+            _orderService.Protected()
+                .Setup<IBookDao>("GetBookDao")
+                .Returns(_bookDao.Object);
         }
 
         [Test]
@@ -39,17 +42,19 @@ namespace IsolatedByInheritanceAndOverride.Test
 
         private void WhenSyncBookOrders()
         {
-            _orderService.SyncBookOrders();
+            _orderService.Object.SyncBookOrders();
         }
 
         private void ShouldNotInsertOrder(string type)
         {
-            _bookDao.DidNotReceive().Insert(Arg.Is<Order>(order => order.Type == type));
+            //_bookDao.DidNotReceive().Insert(Arg.Is<Order>(order => order.Type == type));
+            _bookDao.Verify(x => x.Insert(It.Is<Order>(o => o.Type == type)), Times.Never);
         }
 
         private void ShouldInsertOrders(int times, string type)
         {
-            _bookDao.Received(times).Insert(Arg.Is<Order>(order => order.Type == type));
+            //_bookDao.Received(times).Insert(Arg.Is<Order>(order => order.Type == type));
+            _bookDao.Verify(x => x.Insert(It.Is<Order>(o => o.Type == type)), Times.Exactly(times));
         }
 
         private static Order CreateOrder(string type)
@@ -62,7 +67,10 @@ namespace IsolatedByInheritanceAndOverride.Test
 
         private void GivenOrders(List<Order> orders)
         {
-            _orderService.SetOrders(orders);
+            //_orderService.SetOrders(orders);
+            _orderService.Protected()
+                .Setup<List<Order>>("GetOrders")
+                .Returns(orders);
         }
     }
 
