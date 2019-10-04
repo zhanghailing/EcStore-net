@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -16,6 +17,7 @@ namespace IsolatedByInheritanceAndOverride.Test
             var bookDao = Substitute.For<IBookDao>();
 
             var orderService = new TestBookOrderServiec();
+            orderService.SetOrders(new Order{Type="Book"},new Order(){Type="Book"},new Order(){Type="Test"});
             orderService.SetBookDao(bookDao);
             orderService.SyncBookOrders();
 
@@ -31,6 +33,7 @@ namespace IsolatedByInheritanceAndOverride.Test
     public class TestBookOrderServiec : OrderService
     {
         public IBookDao _BookDao;
+        private List<Order> _Orders;
 
         public void SetBookDao(IBookDao bookDao)
         {
@@ -41,13 +44,13 @@ namespace IsolatedByInheritanceAndOverride.Test
             return _BookDao;
         }
 
+        public void SetOrders(params Order[] orders)
+        {
+            _Orders = orders.ToList();
+        }
         protected override List<Order> GetOrders()
         {
-           var orderList = new List<Order>();
-           orderList.Add(new Order(){Type = "Book",CustomerName = "Test",Price = 123,ProductName = "Product"});
-           orderList.Add(new Order(){Type = "Book",CustomerName = "Test",Price = 123,ProductName = "Product"});
-           orderList.Add(new Order(){Type = "Other",CustomerName = "Test",Price = 123,ProductName = "Product"});
-           return orderList;
+            return _Orders;
         }
     }
 }
