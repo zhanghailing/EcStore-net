@@ -11,10 +11,12 @@ namespace IsolatedByInheritanceAndOverride
     public class OrderService
     {
         private string _filePath = @"C:\temp\testOrders.csv";
+        private List<Order> _Result;
 
         public void SyncBookOrders()
         {
-            var orders = this.GetOrders();
+           
+            var orders = GetOrders();
 
             // only get orders of book
             var ordersOfBook = orders.Where(x => x.Type == "Book");
@@ -26,10 +28,10 @@ namespace IsolatedByInheritanceAndOverride
             }
         }
 
-        private List<Order> GetOrders()
+        protected virtual List<Order> GetOrders()
         {
             // parse csv file to get orders
-            var result = new List<Order>();
+            _Result = new List<Order>();
 
             // directly depend on File I/O
             using (StreamReader sr = new StreamReader(this._filePath, Encoding.UTF8))
@@ -47,12 +49,12 @@ namespace IsolatedByInheritanceAndOverride
                     {
                         string[] line = content.Trim().Split(',');
 
-                        result.Add(this.Mapping(line));
+                        _Result.Add(this.Mapping(line));
                     }
                 }
             }
 
-            return result;
+            return _Result;
         }
 
         private Order Mapping(string[] line)
