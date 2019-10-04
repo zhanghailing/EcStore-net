@@ -13,10 +13,14 @@ namespace IsolatedByInheritanceAndOverride.Test
         [Test]
         public void Test_SyncBookOrders_3_Orders_Only_2_book_order()
         {
+            var bookDao = Substitute.For<IBookDao>();
+
             var orderService = new TestBookOrderServiec();
+            orderService.SetBookDao(bookDao);
             orderService.SyncBookOrders();
-            var book = NSubstitute.Substitute.For<BookDao>();
-            book.Received(2);
+
+
+            bookDao.Received(2).Insert(Arg.Is<Order>(order => order.Type == "Book"));
             // hard to isolate dependency to unit test
             //var books = new TestBookOrderServiec();
             //var target = new OrderService();
@@ -26,6 +30,17 @@ namespace IsolatedByInheritanceAndOverride.Test
 
     public class TestBookOrderServiec : OrderService
     {
+        public IBookDao _BookDao;
+
+        public void SetBookDao(IBookDao bookDao)
+        {
+            _BookDao = bookDao;
+        }
+        protected override IBookDao GetBookDao()
+        {
+            return _BookDao;
+        }
+
         protected override List<Order> GetOrders()
         {
            var orderList = new List<Order>();

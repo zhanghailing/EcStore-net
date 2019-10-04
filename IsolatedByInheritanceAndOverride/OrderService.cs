@@ -12,6 +12,7 @@ namespace IsolatedByInheritanceAndOverride
     {
         private string _filePath = @"C:\temp\testOrders.csv";
         private List<Order> _Result;
+        private IBookDao _BookDao;
 
         public void SyncBookOrders()
         {
@@ -21,11 +22,16 @@ namespace IsolatedByInheritanceAndOverride
             // only get orders of book
             var ordersOfBook = orders.Where(x => x.Type == "Book");
 
-            var bookDao = new BookDao();
+            _BookDao = GetBookDao();
             foreach (var order in ordersOfBook)
             {
-                bookDao.Insert(order);
+                _BookDao.Insert(order);
             }
+        }
+
+        protected virtual IBookDao GetBookDao()
+        {
+            return new BookDao();
         }
 
         protected virtual List<Order> GetOrders()
@@ -82,7 +88,12 @@ namespace IsolatedByInheritanceAndOverride
         public string CustomerName { get; set; }
     }
 
-    public class BookDao
+    public interface IBookDao
+    {
+        void Insert(Order order);
+    }
+
+    public class BookDao : IBookDao
     {
         public void Insert(Order order)
         {
